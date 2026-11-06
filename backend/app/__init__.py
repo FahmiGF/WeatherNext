@@ -1,0 +1,1 @@
+"""WeatherNext AI Backend Application."""

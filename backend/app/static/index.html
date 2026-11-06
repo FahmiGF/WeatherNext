@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WeatherNow AI — Intelligent Weather Prediction & Voice Assistant</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body {
+      background: radial-gradient(circle at 20% 20%, #0d1e3a 0%, #070e1b 100%);
+      color: #e2e8f0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+    }
+    .glass {
+      background: rgba(13, 27, 49, 0.7);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .glass-card {
+      background: rgba(15, 30, 56, 0.6);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(59, 130, 246, 0.15);
+      transition: all 0.3s ease;
+    }
+    .glass-card:hover {
+      border-color: rgba(59, 130, 246, 0.4);
+      transform: translateY(-2px);
+    }
+    .accent-gradient {
+      background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+    }
+    .glow {
+      box-shadow: 0 0 25px rgba(59, 130, 246, 0.25);
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #070e1b; }
+    ::-webkit-scrollbar-thumb { background: #1e3a5f; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3b82f6; }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+  <!-- Top Navigation Bar -->
+  <header class="glass sticky top-0 z-50 px-6 py-3 border-b border-white/10 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl accent-gradient flex items-center justify-center glow">
+        <i data-lucide="cloud-sun" class="w-6 h-6 text-white"></i>
+      </div>
+      <div>
+        <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+          WeatherNow <span class="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 font-semibold border border-blue-500/30">AI Live</span>
+        </h1>
+        <p class="text-xs text-slate-400">Weather Intelligence & Voice Assistant (Open-Meteo + BMKG)</p>
+      </div>
+    </div>
+
+    <!-- City Search & Controls -->
+    <div class="flex items-center gap-3">
+      <div class="relative">
+        <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+        <select id="citySelect" class="bg-[#0b1728] border border-white/10 rounded-lg pl-9 pr-8 py-1.5 text-sm text-slate-200 focus:outline-none focus:border-blue-500 cursor-pointer">
+          <option value="Surabaya">Surabaya, Jawa Timur</option>
+          <option value="Jakarta">Jakarta, DKI Jakarta</option>
+          <option value="Bandung">Bandung, Jawa Barat</option>
+          <option value="Yogyakarta">Yogyakarta, DIY</option>
+          <option value="Semarang">Semarang, Jawa Tengah</option>
+          <option value="Denpasar">Denpasar, Bali</option>
+          <option value="Medan">Medan, Sumatera Utara</option>
+          <option value="Makassar">Makassar, Sulawesi Selatan</option>
+          <option value="Palembang">Palembang, Sumatera Selatan</option>
+          <option value="Malang">Malang, Jawa Timur</option>
+          <option value="Balikpapan">Balikpapan, Kaltim</option>
+          <option value="Manado">Manado, Sulut</option>
+          <option value="Jayapura">Jayapura, Papua</option>
+        </select>
+      </div>
+
+      <button id="btnVoiceToggle" class="px-3 py-1.5 rounded-lg bg-blue-600/30 hover:bg-blue-600/50 text-blue-300 border border-blue-500/30 flex items-center gap-1.5 text-sm transition">
+        <i data-lucide="mic" class="w-4 h-4 text-blue-400"></i>
+        <span>Voice Mode</span>
+      </button>
+
+      <button id="btnSyncBmkg" class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 flex items-center gap-1.5 text-sm transition" title="Sinkronisasi Data BMKG">
+        <i data-lucide="refresh-cw" class="w-4 h-4 text-cyan-400" id="syncIcon"></i>
+        <span class="hidden sm:inline">Sync BMKG</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <div class="px-6 py-2 border-b border-white/5 bg-[#081220]/60 flex gap-2 overflow-x-auto">
+    <button onclick="switchTab('dashboard')" class="tab-btn active px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 bg-blue-600/30 text-blue-300 border border-blue-500/40" id="tab-dashboard">
+      <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+      <span>Dashboard</span>
+    </button>
+    <button onclick="switchTab('forecast7')" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-white/5" id="tab-forecast7">
+      <i data-lucide="calendar" class="w-4 h-4"></i>
+      <span>Prakiraan 7 Hari</span>
+    </button>
+    <button onclick="switchTab('outlook30')" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-white/5" id="tab-outlook30">
+      <i data-lucide="trending-up" class="w-4 h-4"></i>
+      <span>Outlook 30 Hari</span>
+    </button>
+    <button onclick="switchTab('history')" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-white/5" id="tab-history">
+      <i data-lucide="history" class="w-4 h-4"></i>
+      <span>Histori & Evaluasi</span>
+    </button>
+    <button onclick="switchTab('chatbot')" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-white/5" id="tab-chatbot">
+      <i data-lucide="bot" class="w-4 h-4"></i>
+      <span>Asisten AI & Voice</span>
+    </button>
+    <button onclick="switchTab('models')" class="tab-btn px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2 text-slate-400 hover:text-white hover:bg-white/5" id="tab-models">
+      <i data-lucide="cpu" class="w-4 h-4"></i>
+      <span>Status Model AI</span>
+    </button>
+  </div>
+
+  <!-- Weather Alert Banner (Dynamic) -->
+  <div id="alertBanner" class="hidden px-6 py-2.5 bg-amber-500/10 border-b border-amber-500/30 text-amber-300 flex items-center justify-between text-sm">
+    <div class="flex items-center gap-2">
+      <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-400"></i>
+      <span id="alertText">Peringatan Cuaca: Waspada potensi hujan sedang di wilayah Jawa Timur sore ini.</span>
+    </div>
+    <span class="text-xs bg-amber-500/20 px-2 py-0.5 rounded border border-amber-500/30">BMKG MEWS</span>
+  </div>
+
+  <!-- Main Content Area -->
+  <main class="flex-1 p-6 max-w-7xl mx-auto w-full">
+
+    <!-- ======================================================== -->
+    <!-- TAB 1: DASHBOARD -->
+    <!-- ======================================================== -->
+    <div id="view-dashboard" class="space-y-6">
+      
+      <!-- Hero Weather Overview -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Main Weather Card -->
+        <div class="lg:col-span-2 glass-card rounded-2xl p-6 relative overflow-hidden">
+          <div class="absolute -right-10 -bottom-10 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
+          
+          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+            <div>
+              <div class="flex items-center gap-2">
+                <i data-lucide="map-pin" class="w-4 h-4 text-blue-400"></i>
+                <h2 id="currentCity" class="text-2xl font-bold text-white">Surabaya</h2>
+                <span class="text-xs px-2 py-0.5 rounded bg-white/10 text-slate-300" id="currentProvince">Jawa Timur</span>
+              </div>
+              <p class="text-xs text-slate-400 mt-1" id="currentObsTime">Data pengamatan terkini (BMKG & WeatherNext AI)</p>
+            </div>
+            <div class="text-right">
+              <span class="text-xs text-emerald-400 bg-emerald-500/10 px-2 py-1 rounded-full border border-emerald-500/20 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                Sistem Operasional
+              </span>
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-center justify-between gap-6 py-4">
+            <div class="flex items-center gap-6">
+              <div class="text-6xl" id="weatherEmoji">⛅</div>
+              <div>
+                <div class="flex items-baseline gap-2">
+                  <span class="text-6xl font-extrabold text-white tracking-tighter" id="currentTemp">31.5</span>
+                  <span class="text-2xl text-blue-400 font-semibold">°C</span>
+                </div>
+                <p class="text-lg font-medium text-slate-200 mt-1" id="currentCondition">Cerah Berawan</p>
+                <p class="text-xs text-slate-400">Terasa seperti <span id="currentFeelsLike" class="text-white font-semibold">34.0°C</span></p>
+              </div>
+            </div>
+
+            <!-- Mini Quick Stats -->
+            <div class="grid grid-cols-2 gap-3 w-full sm:w-auto">
+              <div class="bg-[#0b1728]/80 p-3 rounded-xl border border-white/5">
+                <p class="text-[11px] text-slate-400 flex items-center gap-1">
+                  <i data-lucide="droplets" class="w-3.5 h-3.5 text-blue-400"></i> Kelembapan
+                </p>
+                <p class="text-base font-bold text-white mt-1" id="currentHumidity">72%</p>
+              </div>
+              <div class="bg-[#0b1728]/80 p-3 rounded-xl border border-white/5">
+                <p class="text-[11px] text-slate-400 flex items-center gap-1">
+                  <i data-lucide="wind" class="w-3.5 h-3.5 text-cyan-400"></i> Angin
+                </p>
+                <p class="text-base font-bold text-white mt-1" id="currentWind">14 km/j</p>
+              </div>
+              <div class="bg-[#0b1728]/80 p-3 rounded-xl border border-white/5">
+                <p class="text-[11px] text-slate-400 flex items-center gap-1">
+                  <i data-lucide="cloud-rain" class="w-3.5 h-3.5 text-indigo-400"></i> Curah Hujan
+                </p>
+                <p class="text-base font-bold text-white mt-1" id="currentPrecip">1.5 mm</p>
+              </div>
+              <div class="bg-[#0b1728]/80 p-3 rounded-xl border border-white/5">
+                <p class="text-[11px] text-slate-400 flex items-center gap-1">
+                  <i data-lucide="sun" class="w-3.5 h-3.5 text-amber-400"></i> Indeks UV
+                </p>
+                <p class="text-base font-bold text-white mt-1" id="currentUV">7.2 (Tinggi)</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom Engine Footnote -->
+          <div class="mt-6 pt-4 border-t border-white/5 flex flex-wrap items-center justify-between text-xs text-slate-400">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="shield-check" class="w-4 h-4 text-blue-400"></i>
+              Model: WeatherNext 3 (10km Res) + BMKG Ground Observation
+            </span>
+            <span class="text-slate-500">Estimasi probabilistik 64 ensemble members</span>
+          </div>
+        </div>
+
+        <!-- Quick AI Assistant Teaser Widget -->
+        <div class="glass-card rounded-2xl p-6 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-semibold px-2 py-1 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 flex items-center gap-1">
+                <i data-lucide="sparkles" class="w-3 h-3"></i> AI Voice Assistant
+              </span>
+              <span class="text-[11px] text-slate-400">Bilingual ID/EN</span>
+            </div>
+            <h3 class="text-lg font-bold text-white mb-2">Tanya Cuaca Kapan Saja</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Tekan tombol mikrofon atau ketik pertanyaan langsung untuk rekomendasi bepergian, peluang hujan, dan tren cuaca.
+            </p>
+
+            <div class="mt-4 space-y-2">
+              <button onclick="askQuickPrompt('Apakah besok akan hujan di Surabaya?')" class="w-full text-left p-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-blue-300 border border-white/5 flex items-center justify-between transition">
+                <span>"Apakah besok akan hujan?"</span>
+                <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+              </button>
+              <button onclick="askQuickPrompt('Bagaimana cuaca 7 hari ke depan?')" class="w-full text-left p-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-blue-300 border border-white/5 flex items-center justify-between transition">
+                <span>"Bagaimana cuaca 7 hari ke depan?"</span>
+                <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+              </button>
+              <button onclick="askQuickPrompt('Bandingkan cuaca hari ini dengan minggu lalu')" class="w-full text-left p-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-blue-300 border border-white/5 flex items-center justify-between transition">
+                <span>"Bandingkan cuaca minggu ini & lalu"</span>
+                <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-4 border-t border-white/5">
+            <button onclick="switchTab('chatbot')" class="w-full py-2 px-4 rounded-xl accent-gradient text-white text-xs font-semibold hover:opacity-90 transition flex items-center justify-center gap-2">
+              <i data-lucide="message-square" class="w-4 h-4"></i> Buka Chatbot Lengkap
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Quick 7-Day Mini Row -->
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-sm font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+            <i data-lucide="calendar-days" class="w-4 h-4 text-blue-400"></i> Prakiraan Cuaca 7 Hari ke Depan
+          </h3>
+          <button onclick="switchTab('forecast7')" class="text-xs text-blue-400 hover:text-blue-300 flex items-center gap-1">
+            Lihat Analisis Detail <i data-lucide="arrow-right" class="w-3 h-3"></i>
+          </button>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3" id="quick7DayList">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Interactive Charts: Temperature & Rain -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="glass-card rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="thermometer" class="w-4 h-4 text-orange-400"></i> Tren Suhu (Min & Maks 7 Hari)
+            </h4>
+            <span class="text-xs text-slate-400">Satuan: °C</span>
+          </div>
+          <div class="h-64">
+            <canvas id="chartTempWeekly"></canvas>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h4 class="text-sm font-bold text-white flex items-center gap-2">
+              <i data-lucide="cloud-rain" class="w-4 h-4 text-blue-400"></i> Probabilitas & Curah Hujan
+            </h4>
+            <span class="text-xs text-slate-400">Probabilitas (%) / Curah (mm)</span>
+          </div>
+          <div class="h-64">
+            <canvas id="chartRainWeekly"></canvas>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 2: 7-DAY FORECAST -->
+    <!-- ======================================================== -->
+    <div id="view-forecast7" class="hidden space-y-6">
+      <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+        <div>
+          <h2 class="text-xl font-bold text-white">Prakiraan Cuaca 7 Hari</h2>
+          <p class="text-xs text-slate-400">Prakiraan operasional meteorologi resolusi tinggi berbasis WeatherNext 3</p>
+        </div>
+        <div class="text-xs bg-blue-500/10 text-blue-300 border border-blue-500/20 px-3 py-1 rounded-lg">
+          Tingkat Keyakinan Tinggi (80% - 95%)
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4" id="detailed7DayList">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 3: 30-DAY OUTLOOK -->
+    <!-- ======================================================== -->
+    <div id="view-outlook30" class="hidden space-y-6">
+      <div class="glass-card p-6 rounded-2xl border-l-4 border-l-indigo-500">
+        <h2 class="text-xl font-bold text-white">Outlook & Tren Cuaca 30 Hari</h2>
+        <p class="text-xs text-slate-300 mt-1 leading-relaxed">
+          Menggabungkan <strong>WeatherNext 3 (Hari 1–15)</strong> dengan <strong>TimesFM-3 (Hari 16–30)</strong>.
+          Untuk hari ke-16 sampai 30, sistem menampilkan tren probabilitas quantile dan rentang ketidakpastian.
+        </p>
+      </div>
+
+      <!-- Monthly Summary Metrics -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-4" id="monthlySummaryCards">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="glass-card rounded-2xl p-5">
+        <h4 class="text-sm font-bold text-white mb-4 flex items-center gap-2">
+          <i data-lucide="line-chart" class="w-4 h-4 text-indigo-400"></i> Proyeksi Rentang Suhu 30 Hari (Min - Maks)
+        </h4>
+        <div class="h-72">
+          <canvas id="chartMonthlyTemp"></canvas>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="text-sm font-semibold text-slate-300 mb-3">Daftar Lengkap Prakiraan 30 Hari</h3>
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-3" id="outlook30List">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 4: HISTORY & EVALUATION -->
+    <!-- ======================================================== -->
+    <div id="view-history" class="hidden space-y-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-xl font-bold text-white">Histori Cuaca & Evaluasi AI</h2>
+          <p class="text-xs text-slate-400">Analisis observasi masa lalu dan perbandingan prediksi vs realisasi (Backtesting)</p>
+        </div>
+      </div>
+
+      <!-- Comparison Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6" id="comparisonWidget">
+        <div class="glass-card p-5 rounded-2xl">
+          <h4 class="text-sm font-bold text-white mb-3">Minggu Ini (7 Hari Terakhir)</h4>
+          <div class="space-y-2 text-xs">
+            <div class="flex justify-between py-1 border-b border-white/5">
+              <span class="text-slate-400">Rata-rata Suhu:</span>
+              <span class="text-white font-semibold" id="histThisWeekTemp">30.8°C</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-white/5">
+              <span class="text-slate-400">Total Curah Hujan:</span>
+              <span class="text-white font-semibold" id="histThisWeekRain">24.5 mm</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-white/5">
+              <span class="text-slate-400">Hari Hujan:</span>
+              <span class="text-white font-semibold" id="histThisWeekDays">3 hari</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="glass-card p-5 rounded-2xl">
+          <h4 class="text-sm font-bold text-white mb-3">Minggu Lalu</h4>
+          <div class="space-y-2 text-xs">
+            <div class="flex justify-between py-1 border-b border-white/5">
+              <span class="text-slate-400">Rata-rata Suhu:</span>
+              <span class="text-white font-semibold" id="histLastWeekTemp">31.2°C</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-white/5">
+              <span class="text-slate-400">Total Curah Hujan:</span>
+              <span class="text-white font-semibold" id="histLastWeekRain">18.0 mm</span>
+            </div>
+            <div class="flex justify-between py-1 border-b border-white/5">
+              <span class="text-slate-400">Hari Hujan:</span>
+              <span class="text-white font-semibold" id="histLastWeekDays">2 hari</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Historical Chart -->
+      <div class="glass-card rounded-2xl p-5">
+        <h4 class="text-sm font-bold text-white mb-4">Tren Observasi 30 Hari Terakhir</h4>
+        <div class="h-64">
+          <canvas id="chartHistory"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 5: AI CHATBOT & VOICE -->
+    <!-- ======================================================== -->
+    <div id="view-chatbot" class="hidden space-y-4">
+      <div class="glass-card rounded-2xl p-4 flex flex-col h-[70vh]">
+        
+        <!-- Chat Header -->
+        <div class="flex items-center justify-between pb-3 border-b border-white/10">
+          <div class="flex items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-purple-600/30 border border-purple-500/40 flex items-center justify-center text-purple-300">
+              <i data-lucide="bot" class="w-5 h-5"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-white">WeatherNext AI Conversational Assistant</h3>
+              <p class="text-[11px] text-slate-400 flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Terhubung ke Database BMKG & WeatherNext AI
+              </p>
+            </div>
+          </div>
+          <button onclick="clearChat()" class="text-xs text-slate-400 hover:text-slate-200">Bersihkan Chat</button>
+        </div>
+
+        <!-- Chat Messages Container -->
+        <div id="chatMessages" class="flex-1 overflow-y-auto py-4 space-y-3 pr-2">
+          <!-- Initial Welcome Message -->
+          <div class="flex gap-3 max-w-xl">
+            <div class="w-8 h-8 rounded-lg bg-blue-600/30 border border-blue-500/40 flex items-center justify-center shrink-0 text-blue-400">
+              <i data-lucide="bot" class="w-4 h-4"></i>
+            </div>
+            <div class="bg-[#0b1728] border border-white/10 rounded-2xl p-3 text-xs text-slate-200 leading-relaxed shadow-sm">
+              <p class="font-semibold text-white mb-1">Halo! Saya Asisten Cuaca WeatherNow AI 🌦️</p>
+              <p>Anda bisa bertanya kepada saya tentang cuaca hari ini, besok, prakiraan 7 hari, kemungkinan hujan, maupun perbandingan cuaca di berbagai kota Indonesia. Anda juga bisa mengklik tombol mikrofon untuk berbicara langsung!</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Voice Status Indicator -->
+        <div id="voiceListeningBar" class="hidden py-2 px-3 bg-red-500/20 border border-red-500/40 rounded-xl mb-2 flex items-center justify-between text-xs text-red-300">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-ping"></span>
+            <span>Mendengarkan suara Anda... Silakan berbicara...</span>
+          </div>
+          <button onclick="stopVoiceRecognition()" class="text-xs bg-red-500/30 px-2 py-0.5 rounded text-white">Stop</button>
+        </div>
+
+        <!-- Chat Input Bar -->
+        <div class="pt-3 border-t border-white/10 flex items-center gap-2">
+          <button id="btnMicInput" onclick="toggleVoiceInput()" class="w-10 h-10 rounded-xl bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 flex items-center justify-center transition" title="Gunakan Suara (Voice)">
+            <i data-lucide="mic" class="w-5 h-5"></i>
+          </button>
+          
+          <input type="text" id="chatInput" placeholder="Tanyakan cuaca (mis. 'Apakah besok akan hujan di Surabaya?')..." 
+            class="flex-1 bg-[#0b1728] border border-white/10 rounded-xl px-4 py-2 text-sm text-slate-200 focus:outline-none focus:border-blue-500"
+            onkeydown="if(event.key === 'Enter') sendChatMessage()">
+          
+          <button onclick="sendChatMessage()" class="w-10 h-10 rounded-xl accent-gradient text-white flex items-center justify-center hover:opacity-90 transition">
+            <i data-lucide="send" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ======================================================== -->
+    <!-- TAB 6: AI MODELS STATUS -->
+    <!-- ======================================================== -->
+    <div id="view-models" class="hidden space-y-6">
+      <div>
+        <h2 class="text-xl font-bold text-white">Status & Evaluasi Model AI</h2>
+        <p class="text-xs text-slate-400">Infrastruktur orkestrasi prediksi cuaca cerdas WeatherNext AI</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="modelStatusList">
+        <!-- Populated by JS -->
+      </div>
+
+      <!-- Accuracy Benchmarks Table -->
+      <div class="glass-card rounded-2xl p-5">
+        <h4 class="text-sm font-bold text-white mb-3">Tolak Ukur Akurasi (Backtesting Metrics)</h4>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left">
+            <thead class="text-slate-400 border-b border-white/10">
+              <tr>
+                <th class="py-2">Model</th>
+                <th class="py-2">Horizon</th>
+                <th class="py-2">MAE Suhu (°C)</th>
+                <th class="py-2">RMSE Suhu</th>
+                <th class="py-2">Brier Score Hujan</th>
+                <th class="py-2">Jumlah Sampel</th>
+              </tr>
+            </thead>
+            <tbody id="accuracyTableBody" class="divide-y divide-white/5 text-slate-300">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="glass border-t border-white/5 py-4 px-6 text-center text-xs text-slate-500">
+    <p>WeatherNow AI © 2026 — Prakiraan didukung oleh Open-Meteo & BMKG Indonesia.</p>
+  </footer>
+
+  <!-- Application Logic -->
+  <script>
+    const API_BASE = window.location.origin;
+    let currentSelectedCity = "Surabaya";
+    let isSpeechSynthesisActive = true;
+    let recognition = null;
+
+    // Charts references
+    let chartTemp = null;
+    let chartRain = null;
+    let chartMonthly = null;
+    let chartHist = null;
+
+    // Tab Switching
+    function switchTab(tabId) {
+      document.querySelectorAll('[id^="view-"]').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active', 'bg-blue-600/30', 'text-blue-300', 'border-blue-500/40');
+        btn.classList.add('text-slate-400');
+      });
+
+      const activeView = document.getElementById('view-' + tabId);
+      const activeBtn = document.getElementById('tab-' + tabId);
+      if (activeView) activeView.classList.remove('hidden');
+      if (activeBtn) {
+        activeBtn.classList.add('active', 'bg-blue-600/30', 'text-blue-300', 'border', 'border-blue-500/40');
+        activeBtn.classList.remove('text-slate-400');
+      }
+
+      if (tabId === 'dashboard') {
+        setTimeout(() => { if (chartTemp) chartTemp.resize(); if (chartRain) chartRain.resize(); }, 100);
+      } else if (tabId === 'outlook30') {
+        setTimeout(() => { if (chartMonthly) chartMonthly.resize(); }, 100);
+      } else if (tabId === 'history') {
+        setTimeout(() => { if (chartHist) chartHist.resize(); }, 100);
+      }
+    }
+
+    // Weather condition to Emoji mapper
+    function getConditionEmoji(condition) {
+      if (!condition) return "⛅";
+      const c = condition.toLowerCase();
+      if (c.includes("petir") || c.includes("thunder")) return "⛈️";
+      if (c.includes("lebat")) return "🌧️";
+      if (c.includes("hujan")) return "🌦️";
+      if (c.includes("cerah berawan")) return "⛅";
+      if (c.includes("cerah")) return "☀️";
+      if (c.includes("kabut") || c.includes("asap")) return "🌫️";
+      if (c.includes("berawan")) return "☁️";
+      return "⛅";
+    }
+
+    // Load All Weather Data for City
+    async function loadAllWeatherData(city) {
+      try {
+        currentSelectedCity = city;
+        document.getElementById('currentCity').textContent = city;
+
+        // 1. Current Weather
+        const curRes = await fetch(`${API_BASE}/api/weather/current?city=${encodeURIComponent(city)}`);
+        const curJson = await curRes.json();
+        if (curJson.success && curJson.data) {
+          const obs = curJson.data.observation;
+          document.getElementById('currentProvince').textContent = curJson.data.location.province;
+          document.getElementById('currentTemp').textContent = obs.temperature.toFixed(1);
+          document.getElementById('currentCondition').textContent = obs.condition;
+          document.getElementById('weatherEmoji').textContent = getConditionEmoji(obs.condition);
+          document.getElementById('currentFeelsLike').textContent = `${curJson.data.feels_like || obs.temperature.toFixed(1)}°C`;
+          document.getElementById('currentHumidity').textContent = `${obs.humidity.toFixed(0)}%`;
+          document.getElementById('currentWind').textContent = `${obs.wind_speed.toFixed(0)} km/j`;
+          document.getElementById('currentPrecip').textContent = `${obs.precipitation.toFixed(1)} mm`;
+          document.getElementById('currentUV').textContent = `${obs.uv_index || 7.0} (Tinggi)`;
+          document.getElementById('currentObsTime').textContent = `Diperbarui: ${new Date(obs.observed_at).toLocaleTimeString('id-ID')} WIB`;
+        }
+
+        // 2. Weekly Forecast (7 days)
+        const weekRes = await fetch(`${API_BASE}/api/weather/weekly?city=${encodeURIComponent(city)}`);
+        const weekJson = await weekRes.json();
+        if (weekJson.success && weekJson.data) {
+          renderWeeklyForecast(weekJson.data.forecasts);
+        }
+
+        // 3. Monthly Outlook (30 days)
+        const monthRes = await fetch(`${API_BASE}/api/weather/monthly?city=${encodeURIComponent(city)}`);
+        const monthJson = await monthRes.json();
+        if (monthJson.success && monthJson.data) {
+          renderMonthlyOutlook(monthJson.data);
+        }
+
+        // 4. Alerts
+        const alertRes = await fetch(`${API_BASE}/api/weather/alerts?city=${encodeURIComponent(city)}`);
+        const alertJson = await alertRes.json();
+        if (alertJson.success && alertJson.data && alertJson.data.length > 0) {
+          const first = alertJson.data[0];
+          document.getElementById('alertBanner').classList.remove('hidden');
+          document.getElementById('alertText').textContent = `${first.title}: ${first.description}`;
+        } else {
+          document.getElementById('alertBanner').classList.add('hidden');
+        }
+
+        // 5. History
+        const histRes = await fetch(`${API_BASE}/api/weather/history?city=${encodeURIComponent(city)}&days=30`);
+        const histJson = await histRes.json();
+        if (histJson.success && histJson.data) {
+          renderHistoryChart(histJson.data.observations);
+        }
+
+      } catch (err) {
+        console.error("Gagal memuat data cuaca:", err);
+      }
+    }
+
+    // Render Weekly Forecast & Charts
+    function renderWeeklyForecast(forecasts) {
+      const quickContainer = document.getElementById('quick7DayList');
+      const detailedContainer = document.getElementById('detailed7DayList');
+      quickContainer.innerHTML = '';
+      detailedContainer.innerHTML = '';
+
+      const labels = [];
+      const tempsMin = [];
+      const tempsMax = [];
+      const rainProbs = [];
+      const precips = [];
+
+      const dayNames = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
+
+      forecasts.forEach((f, idx) => {
+        const d = new Date(f.forecast_date);
+        const dayLabel = idx === 0 ? 'Hari Ini' : idx === 1 ? 'Besok' : `${dayNames[d.getDay()]}, ${d.getDate()} Nov`;
+        labels.push(dayLabel);
+        tempsMin.push(f.temperature_min);
+        tempsMax.push(f.temperature_max);
+        rainProbs.push(f.rain_probability);
+        precips.push(f.precipitation_estimate);
+
+        // Quick mini card
+        const miniCard = document.createElement('div');
+        miniCard.className = 'glass-card p-3 rounded-xl text-center border border-white/5';
+        miniCard.innerHTML = `
+          <p class="text-[11px] font-medium text-slate-400">${dayLabel}</p>
+          <div class="text-2xl my-1.5">${getConditionEmoji(f.condition)}</div>
+          <p class="text-xs font-bold text-white">${Math.round(f.temperature_max)}° <span class="text-slate-400 font-normal">${Math.round(f.temperature_min)}°</span></p>
+          <p class="text-[10px] text-blue-400 mt-1 flex items-center justify-center gap-0.5">
+            💧 ${Math.round(f.rain_probability)}%
+          </p>
+        `;
+        quickContainer.appendChild(miniCard);
+
+        // Detailed card
+        const detCard = document.createElement('div');
+        detCard.className = 'glass-card p-4 rounded-xl space-y-3';
+        detCard.innerHTML = `
+          <div class="flex justify-between items-center border-b border-white/5 pb-2">
+            <span class="text-sm font-bold text-white">${dayLabel}</span>
+            <span class="text-xs px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 font-medium">${Math.round(f.confidence_score * 100 || 85)}% Conf</span>
+          </div>
+          <div class="flex items-center gap-3">
+            <div class="text-3xl">${getConditionEmoji(f.condition)}</div>
+            <div>
+              <p class="text-xs font-semibold text-slate-200">${f.condition}</p>
+              <p class="text-base font-extrabold text-white">${f.temperature_min}° - ${f.temperature_max}°C</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-400 pt-1">
+            <div class="flex items-center gap-1">💧 Hujan: <span class="text-white font-medium">${f.rain_probability}%</span></div>
+            <div class="flex items-center gap-1">🌧️ Curah: <span class="text-white font-medium">${f.precipitation_estimate}mm</span></div>
+            <div class="flex items-center gap-1">💨 Angin: <span class="text-white font-medium">${f.wind_speed}km/j</span></div>
+            <div class="flex items-center gap-1">💦 Lembap: <span class="text-white font-medium">${f.humidity}%</span></div>
+          </div>
+        `;
+        detailedContainer.appendChild(detCard);
+      });
+
+      // Render Chart: Temp
+      if (chartTemp) chartTemp.destroy();
+      const ctxTemp = document.getElementById('chartTempWeekly').getContext('2d');
+      chartTemp = new Chart(ctxTemp, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Maks (°C)',
+              data: tempsMax,
+              borderColor: '#f59e0b',
+              backgroundColor: 'rgba(245, 158, 11, 0.15)',
+              tension: 0.35,
+              fill: false
+            },
+            {
+              label: 'Min (°C)',
+              data: tempsMin,
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.15)',
+              tension: 0.35,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+          scales: {
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+          }
+        }
+      });
+
+      // Render Chart: Rain
+      if (chartRain) chartRain.destroy();
+      const ctxRain = document.getElementById('chartRainWeekly').getContext('2d');
+      chartRain = new Chart(ctxRain, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              type: 'line',
+              label: 'Peluang Hujan (%)',
+              data: rainProbs,
+              borderColor: '#60a5fa',
+              backgroundColor: 'rgba(96, 165, 250, 0.2)',
+              yAxisID: 'y1',
+              tension: 0.3
+            },
+            {
+              type: 'bar',
+              label: 'Estimasi Curah (mm)',
+              data: precips,
+              backgroundColor: 'rgba(59, 130, 246, 0.65)',
+              borderRadius: 6,
+              yAxisID: 'y'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#94a3b8', font: { size: 11 } } } },
+          scales: {
+            y: { position: 'left', grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+            y1: { position: 'right', max: 100, min: 0, grid: { display: false }, ticks: { color: '#60a5fa' } },
+            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+          }
+        }
+      });
+    }
+
+    // Render 30-Day Outlook
+    function renderMonthlyOutlook(data) {
+      const summary = data.summary;
+      const sContainer = document.getElementById('monthlySummaryCards');
+      sContainer.innerHTML = `
+        <div class="glass-card p-4 rounded-xl">
+          <p class="text-xs text-slate-400">Rata-rata Suhu</p>
+          <p class="text-lg font-bold text-white mt-1">${summary.avg_temp_min}° - ${summary.avg_temp_max}°C</p>
+        </div>
+        <div class="glass-card p-4 rounded-xl">
+          <p class="text-xs text-slate-400">Total Curah Hujan</p>
+          <p class="text-lg font-bold text-blue-400 mt-1">${summary.total_precipitation} mm</p>
+        </div>
+        <div class="glass-card p-4 rounded-xl">
+          <p class="text-xs text-slate-400">Peluang Hujan Rata-rata</p>
+          <p class="text-lg font-bold text-indigo-400 mt-1">${summary.avg_rain_probability}%</p>
+        </div>
+        <div class="glass-card p-4 rounded-xl">
+          <p class="text-xs text-slate-400">Kondisi Dominan</p>
+          <p class="text-lg font-bold text-emerald-400 mt-1">${summary.dominant_condition}</p>
+        </div>
+      `;
+
+      const listContainer = document.getElementById('outlook30List');
+      listContainer.innerHTML = '';
+
+      const labels = [];
+      const mins = [];
+      const maxs = [];
+
+      data.forecasts.forEach((f, idx) => {
+        labels.push(`H+${idx+1}`);
+        mins.push(f.temperature_min);
+        maxs.push(f.temperature_max);
+
+        const card = document.createElement('div');
+        card.className = 'glass-card p-2.5 rounded-lg text-center text-xs';
+        card.innerHTML = `
+          <p class="text-[10px] text-slate-400 font-semibold">${f.forecast_date.substring(5)}</p>
+          <div class="text-xl my-1">${getConditionEmoji(f.condition)}</div>
+          <p class="font-bold text-white">${f.temperature_min}° - ${f.temperature_max}°</p>
+          <p class="text-[10px] text-blue-400">💧 ${f.rain_probability}%</p>
+        `;
+        listContainer.appendChild(card);
+      });
+
+      if (chartMonthly) chartMonthly.destroy();
+      const ctxMonthly = document.getElementById('chartMonthlyTemp').getContext('2d');
+      chartMonthly = new Chart(ctxMonthly, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Suhu Maks (°C)',
+              data: maxs,
+              borderColor: '#f59e0b',
+              backgroundColor: 'rgba(245, 158, 11, 0.1)',
+              tension: 0.35,
+              fill: false
+            },
+            {
+              label: 'Suhu Min (°C)',
+              data: mins,
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              tension: 0.35,
+              fill: false
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#94a3b8' } } },
+          scales: {
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+          }
+        }
+      });
+    }
+
+    // Render History Chart
+    function renderHistoryChart(observations) {
+      if (!observations || observations.length === 0) return;
+      const labels = observations.map(o => o.observed_at.substring(5, 10));
+      const temps = observations.map(o => o.temperature);
+      const precips = observations.map(o => o.precipitation);
+
+      if (chartHist) chartHist.destroy();
+      const ctxHist = document.getElementById('chartHistory').getContext('2d');
+      chartHist = new Chart(ctxHist, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Suhu Aktual (°C)',
+              data: temps,
+              borderColor: '#3b82f6',
+              backgroundColor: 'rgba(59,130,246,0.1)',
+              yAxisID: 'y'
+            },
+            {
+              label: 'Curah Hujan (mm)',
+              data: precips,
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16,185,129,0.2)',
+              type: 'bar',
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            y: { grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#94a3b8' } },
+            y1: { position: 'right', grid: { display: false }, ticks: { color: '#10b981' } },
+            x: { grid: { display: false }, ticks: { color: '#94a3b8' } }
+          }
+        }
+      });
+    }
+
+    // Load AI Model Status & Accuracy Table
+    async function loadModelStatus() {
+      try {
+        const mRes = await fetch(`${API_BASE}/api/admin/models`);
+        const mJson = await mRes.json();
+        if (mJson.success && mJson.data) {
+          const list = document.getElementById('modelStatusList');
+          list.innerHTML = '';
+          mJson.data.forEach(m => {
+            const card = document.createElement('div');
+            card.className = 'glass-card p-4 rounded-xl border border-white/5 space-y-2';
+            card.innerHTML = `
+              <div class="flex justify-between items-center">
+                <span class="text-sm font-bold text-white">${m.name}</span>
+                <span class="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/30">● ${m.status.toUpperCase()}</span>
+              </div>
+              <p class="text-xs text-slate-300">${m.description}</p>
+              <div class="flex justify-between text-[11px] text-slate-400 pt-2 border-t border-white/5">
+                <span>Versi: <strong class="text-white">${m.version}</strong></span>
+                <span>Cakupan: <strong class="text-blue-400">${m.forecast_range}</strong></span>
+              </div>
+            `;
+            list.appendChild(card);
+          });
+        }
+
+        const aRes = await fetch(`${API_BASE}/api/admin/accuracy`);
+        const aJson = await aRes.json();
+        if (aJson.success && aJson.data) {
+          const tbody = document.getElementById('accuracyTableBody');
+          tbody.innerHTML = '';
+          aJson.data.forEach(r => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td class="py-2.5 font-medium text-white">${r.model_name}</td>
+              <td class="py-2.5">H+${r.horizon_days} (${r.horizon_days} Hari)</td>
+              <td class="py-2.5 text-amber-400 font-mono">${r.mae_temperature.toFixed(2)}°C</td>
+              <td class="py-2.5 font-mono">${r.rmse_temperature.toFixed(2)}</td>
+              <td class="py-2.5 text-blue-400 font-mono">${r.brier_score_rain.toFixed(2)}</td>
+              <td class="py-2.5">${r.sample_count} validasi</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+      } catch (e) {
+        console.error("Gagal memuat status model:", e);
+      }
+    }
+
+    // AI Chatbot Logic
+    const chatSessionId = 'session-' + Math.random().toString(36).substring(2, 9);
+
+    async function sendChatMessage(customMsg = null) {
+      const input = document.getElementById('chatInput');
+      const msg = customMsg || input.value.trim();
+      if (!msg) return;
+
+      appendChatMessage('user', msg);
+      if (!customMsg) input.value = '';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/ai/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            session_id: chatSessionId,
+            message: msg,
+            location: currentSelectedCity
+          })
+        });
+        const json = await res.json();
+        if (json.success && json.data) {
+          appendChatMessage('bot', json.data.reply);
+          // If voice TTS is active, speak the response
+          if (isSpeechSynthesisActive) {
+            speakText(json.data.reply.replace(/[\*\_#]/g, ''));
+          }
+        }
+      } catch (err) {
+        appendChatMessage('bot', 'Maaf, terjadi kendala koneksi ke server AI WeatherNext.');
+      }
+    }
+
+    function appendChatMessage(sender, text) {
+      const c = document.getElementById('chatMessages');
+      const div = document.createElement('div');
+      div.className = sender === 'user' ? 'flex justify-end' : 'flex gap-3 max-w-xl';
+
+      if (sender === 'user') {
+        div.innerHTML = `
+          <div class="bg-blue-600 text-white rounded-2xl p-3 text-xs leading-relaxed max-w-md shadow-sm">
+            <p>${text}</p>
+          </div>
+        `;
+      } else {
+        div.innerHTML = `
+          <div class="w-8 h-8 rounded-lg bg-purple-600/30 border border-purple-500/40 flex items-center justify-center shrink-0 text-purple-400">
+            <i data-lucide="bot" class="w-4 h-4"></i>
+          </div>
+          <div class="bg-[#0b1728] border border-white/10 rounded-2xl p-3 text-xs text-slate-200 leading-relaxed shadow-sm space-y-1">
+            ${text.replace(/\n/g, '<br>')}
+          </div>
+        `;
+      }
+      c.appendChild(div);
+      c.scrollTop = c.scrollHeight;
+      lucide.createIcons();
+    }
+
+    function askQuickPrompt(text) {
+      switchTab('chatbot');
+      sendChatMessage(text);
+    }
+
+    function clearChat() {
+      document.getElementById('chatMessages').innerHTML = '';
+    }
+
+    // Text-to-Speech (Indonesian)
+    function speakText(text) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        const clean = text.substring(0, 200); // limit speech snippet for responsiveness
+        const utter = new SpeechSynthesisUtterance(clean);
+        utter.lang = 'id-ID';
+        utter.rate = 1.05;
+        window.speechSynthesis.speak(utter);
+      }
+    }
+
+    // Speech-to-Text (Voice Recognition)
+    function toggleVoiceInput() {
+      const bar = document.getElementById('voiceListeningBar');
+      if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+        alert("Browser Anda belum mendukung Web Speech Recognition. Gunakan Chrome atau Edge.");
+        return;
+      }
+
+      if (recognition) {
+        stopVoiceRecognition();
+        return;
+      }
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognition = new SpeechRecognition();
+      recognition.lang = 'id-ID';
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        bar.classList.remove('hidden');
+      };
+
+      recognition.onresult = (e) => {
+        const transcript = e.results[0][0].transcript;
+        document.getElementById('chatInput').value = transcript;
+        sendChatMessage(transcript);
+      };
+
+      recognition.onerror = (e) => {
+        console.warn("Speech error:", e);
+        stopVoiceRecognition();
+      };
+
+      recognition.onend = () => {
+        stopVoiceRecognition();
+      };
+
+      recognition.start();
+    }
+
+    function stopVoiceRecognition() {
+      if (recognition) {
+        try { recognition.stop(); } catch(e){}
+        recognition = null;
+      }
+      document.getElementById('voiceListeningBar').classList.add('hidden');
+    }
+
+    // Event Listeners
+    document.getElementById('citySelect').addEventListener('change', (e) => {
+      loadAllWeatherData(e.target.value);
+    });
+
+    document.getElementById('btnVoiceToggle').addEventListener('click', () => {
+      isSpeechSynthesisActive = !isSpeechSynthesisActive;
+      const btn = document.getElementById('btnVoiceToggle');
+      if (isSpeechSynthesisActive) {
+        btn.classList.add('bg-blue-600/30', 'text-blue-300');
+        btn.classList.remove('bg-white/5', 'text-slate-400');
+        speakText("Mode suara diaktifkan");
+      } else {
+        btn.classList.remove('bg-blue-600/30', 'text-blue-300');
+        btn.classList.add('bg-white/5', 'text-slate-400');
+        window.speechSynthesis.cancel();
+      }
+    });
+
+    document.getElementById('btnSyncBmkg').addEventListener('click', async () => {
+      const icon = document.getElementById('syncIcon');
+      icon.classList.add('animate-spin');
+      try {
+        await fetch(`${API_BASE}/api/admin/refresh-bmkg`, { method: 'POST' });
+        await loadAllWeatherData(currentSelectedCity);
+      } finally {
+        setTimeout(() => icon.classList.remove('animate-spin'), 800);
+      }
+    });
+
+    // Initialize application
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      loadAllWeatherData('Surabaya');
+      loadModelStatus();
+    });
+  </script>
+</body>
+</html>
